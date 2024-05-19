@@ -21,7 +21,7 @@ jobs:
               run: pip install -r requirements.txt
             - name: Run script
               env:
-                  MASTODON_INSTANCE: $MASTODON_INSTANCE
-                  MASTODON_USER: $MASTODON_USER
+                  MASTODON_INSTANCE: "$MASTODON_INSTANCE"
+                  MASTODON_USER: "$MASTODON_USER"
                   MASTODON_TOKEN: ${{ secrets.MASTODON_TOKEN }}
               run: python best_of_mltshp.py
