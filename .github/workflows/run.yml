@@ -1,0 +1,23 @@
+name: Run the bot
+
+on:
+    push:
+    workflow_dispatch:
+    schedule:
+        - cron: "0 * * * *"
+
+jobs:
+    scheduled:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Check out repo
+              uses: actions/checkout@v4
+            - name: Setup Python
+              uses: actions/setup-python@v5
+              with:
+                  python-version: "3.11"
+                  cache: "pip"
+            - name: Install requirements
+              run: pip install -r requirements.txt
+            - name: Run script
+              run: python best_of_mltshp.py
