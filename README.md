@@ -2,6 +2,8 @@
 
 Takes an [RSS feed](https://mltshp.com/user/mltshp/rss) and posts to a [configured bot account](https://mefi.social/@best_of_mltshp).
 
+_Note: I've turned the bot off momentarily while I rework some things._
+
 ## Development Setup
 
 ```
