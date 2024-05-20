@@ -28,7 +28,7 @@ def post_toot(toot):
         },
         data={
             "status": toot,
-            "visibility": "public"
+            "visibility": "unlisted"
         }
     )
     if response.status_code == 200:
