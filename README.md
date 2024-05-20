@@ -1,6 +1,6 @@
 # Best of MLTSHP Mastodon bot
 
-Takes an [RSS feed](https://mltshp.com/user/mltshp/rss) and posts to a [configured bot account](https://mefi.social/@best_of_mltshp).
+Takes an [RSS feed](https://mltshp.com/user/mltshp/rss) and posts to a [configured bot account](https://mefi.social/@best_of_mltshp). The bot checks the MLTSHP feed and compares it to a feed of its own already-posted toots and if it finds one that's missing, the bot toots it out.
 
 ## Development Setup
 
@@ -30,7 +30,7 @@ This repo includes a workflow to run the bot:
 
 -   Each time an update gets pushed
 -   On demand from the Actions tab
--   Once per hour
+-   Every five minutes
 
 ## Inspiration
 

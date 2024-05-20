@@ -13,14 +13,13 @@ MASTODON_INSTANCE = os.environ["MASTODON_INSTANCE"]
 MASTODON_USER = os.environ["MASTODON_USER"]
 MASTODON_TOKEN = os.environ["MASTODON_TOKEN"]
 
-SESSION = requests.session()
 IDEMPOTENCY_KEY = "".join(random.choices(string.ascii_lowercase + string.digits, k=12))
 
 def encode_toot(feed_entry):
     return f"{feed_entry.link} “{feed_entry.title}”"
 
 def post_toot(toot):
-    response = SESSION.post(
+    response = requests.post(
         f"https://{MASTODON_INSTANCE}/api/v1/statuses",
         headers={
             "Authorization": f"Bearer {MASTODON_TOKEN}",
@@ -59,4 +58,4 @@ for entry in output_feed.entries:
 for entry in input_feed.entries:
     if entry.link not in already_tooted:
         post_toot(encode_toot(entry))
-        already_tooted.append(entry.link)
+        break
