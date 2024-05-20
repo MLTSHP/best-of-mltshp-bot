@@ -47,7 +47,7 @@ input_feed.entries.reverse() # Start with the oldest entry in the popular feed
 print(f"  found {len(input_feed.entries)} entries")
 
 print(f"Loading {MASTODON_USER} RSS feed")
-output_feed = feedparser.parse(f"https://{MASTODON_INSTANCE}/{MASTODON_USER}.rss")
+output_feed = feedparser.parse(f"https://{MASTODON_INSTANCE}/{MASTODON_USER}.rss?limit=200")
 print(f"  found {len(output_feed.entries)} entries")
 
 already_tooted = []
