@@ -60,17 +60,22 @@ def encode_toot(entry):
     return f"{entry.link} “{entry.title}”"
 
 def post_toot(toot, attachment):
+    data = {
+        "status": toot,
+        "visibility": "unlisted"
+    }
+    if attachment and "id" in attachment:
+        data["media_ids[]"] = attachment["id"]
+    else:
+        print("Posting without an attachment")
+
     rsp = requests.post(
         f"https://{MASTODON_INSTANCE}/api/v1/statuses",
         headers={
             "Authorization": f"Bearer {MASTODON_TOKEN}",
             "Idempotency-Key": IDEMPOTENCY_KEY
         },
-        data={
-            "status": toot,
-            "visibility": "unlisted",
-            "media_ids[]": attachment["id"]
-        }
+        data=data
     )
     if rsp.status_code == 200:
         print(f"Posted {toot}")
@@ -126,11 +131,12 @@ for entry in input_feed.entries:
         os.remove(filename)
         if "id" not in attachment:
             print(attachment)
-            raise Exception("Attachment failed to upload")
         toot = post_toot(encode_toot(entry), attachment)
         if toot and "id" in toot:
             toot_id = toot["id"]
             print(f"https://{MASTODON_INSTANCE}/{MASTODON_USER}/{toot_id}")
+        else:
+            raise Exception("Something went wrong")
         break
 
 if not toot:
