@@ -19,11 +19,48 @@ def load_feed(url):
     response = requests.get(url)
     return feedparser.parse(response.text)
 
-def encode_toot(feed_entry):
-    return f"{feed_entry.link} “{feed_entry.title}”"
+def get_media(entry):
+    url = re.search(r"https://mltshp.com/r/[a-zA-Z0-9]+", entry.description)
+    alt = re.search(r"alt=\"([^\"]*)\"", entry.description)
+    return [url[0], alt[1]]
 
-def post_toot(toot):
-    response = requests.post(
+def download_media(url):
+    print(f"Downloading {url}")
+    filename = url.split('/')[-1]
+    rsp = requests.get(url, stream=True)
+    rsp.raise_for_status()
+    with open(filename, "wb") as file:
+        for chunk in rsp.iter_content(chunk_size=8192): 
+            file.write(chunk)
+    return [filename, rsp.headers["Content-Type"]]
+
+def upload_media(filename, content_type, alt_text):
+    print(f"Uploading {filename} ({content_type}) “{alt_text}”")
+    rsp = requests.post(
+        f"https://{MASTODON_INSTANCE}/api/v2/media",
+        headers={
+            "Authorization": f"Bearer {MASTODON_TOKEN}",
+            "Idempotency-Key": IDEMPOTENCY_KEY
+        },
+        files={
+            "file": (
+                filename,
+                open(filename, "rb"),
+                content_type
+            )
+        },
+        data={
+            "description": alt_text
+        },
+        timeout=30
+    )
+    return rsp.json()
+
+def encode_toot(entry):
+    return f"{entry.link} “{entry.title}”"
+
+def post_toot(toot, attachment):
+    rsp = requests.post(
         f"https://{MASTODON_INSTANCE}/api/v1/statuses",
         headers={
             "Authorization": f"Bearer {MASTODON_TOKEN}",
@@ -31,14 +68,16 @@ def post_toot(toot):
         },
         data={
             "status": toot,
-            "visibility": "unlisted"
+            "visibility": "unlisted",
+            "media_ids[]": attachment["id"]
         }
     )
-    if response.status_code == 200:
+    if rsp.status_code == 200:
         print(f"Posted {toot}")
     else:
-        print(f"Failed to post {toot}")
-        print(response.status_code)
+        print(f"Failed to post {toot} (HTTP {rsp.status_code})")
+        exit(1)
+    return rsp.json()
 
 print("Loading MLTSHP Popular RSS feed")
 input_feed = load_feed("https://mltshp.com/user/mltshp/rss")
@@ -57,7 +96,18 @@ for entry in output_feed.entries:
     if match:
         already_tooted.append(match[0])
 
+toot = None
 for entry in input_feed.entries:
     if entry.link not in already_tooted:
-        post_toot(encode_toot(entry))
+        (url, alt_text) = get_media(entry)
+        (filename, content_type) = download_media(url)
+        attachment = upload_media(filename, content_type, alt_text)
+        toot = post_toot(encode_toot(entry), attachment)
+        os.remove(filename)
         break
+
+if toot:
+    toot_id = toot["id"]
+    print(f"https://{MASTODON_INSTANCE}/{MASTODON_USER}/{toot_id}")
+else:
+    print("Nothing new to post")
