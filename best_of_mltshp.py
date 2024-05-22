@@ -1,5 +1,6 @@
 from dotenv import load_dotenv
 import feedparser
+import html
 import os
 import random
 import re
@@ -22,7 +23,7 @@ def load_feed(url):
 def get_media(entry):
     url = re.search(r"https://mltshp.com/r/[a-zA-Z0-9]+", entry.description)
     alt = re.search(r"alt=\"([^\"]*)\"", entry.description)
-    return [url[0], alt[1]]
+    return [url[0], html.unescape(alt[1])]
 
 def download_media(url):
     print(f"Downloading {url}")
