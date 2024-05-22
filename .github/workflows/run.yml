@@ -3,8 +3,8 @@ name: Run the bot
 on:
     workflow_dispatch:
     push:
-    #schedule:
-    #    - cron: "*/5 * * * *"
+    schedule:
+        - cron: "*/5 * * * *"
 
 jobs:
     scheduled:
@@ -25,3 +25,11 @@ jobs:
                   MASTODON_USER: ${{ vars.MASTODON_USER }}
                   MASTODON_TOKEN: ${{ secrets.MASTODON_TOKEN }}
               run: python best_of_mltshp.py
+            - name: Update links
+              run: |-
+                  git config user.name "Automated"
+                  git config user.email "actions@users.noreply.github.com"
+                  git add links.log
+                  timestamp=$(date -u)
+                  git commit -m "Updated links: ${timestamp}" || exit 0
+                  git push

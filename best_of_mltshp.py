@@ -79,6 +79,33 @@ def post_toot(toot, attachment):
         exit(1)
     return rsp.json()
 
+def save_links(links):
+    links.sort()
+    # limit the number of links to 200
+    if len(links) > 200:
+        num_links = len(links)
+        start = num_links - 200
+        links = links[start:num_links]
+    with open('links.log', 'w') as file:
+        file.write("\n".join(links))
+
+def load_links():
+    links = []
+    try:
+        print("Loading links.log")
+        with open("links.log", "r") as file:
+            links = file.read().split("\n")
+    except FileNotFoundError:
+        print(f"Loading {MASTODON_USER} RSS feed")
+        output_feed = load_feed(f"https://{MASTODON_INSTANCE}/{MASTODON_USER}.rss?limit=200")
+        for entry in output_feed.entries:
+            match = re.search('https://mltshp.com/p/[a-zA-Z0-9]+', entry.description)
+            if match:
+                links.append(match[0])
+        save_links(links)
+    print(f"  found {len(links)} entries")
+    return links
+
 print("Loading MLTSHP Popular RSS feed")
 input_feed = load_feed("https://mltshp.com/user/mltshp/rss")
 if len(input_feed.entries) == 0:
@@ -86,28 +113,25 @@ if len(input_feed.entries) == 0:
 input_feed.entries.reverse() # Start with the oldest entry in the popular feed
 print(f"  found {len(input_feed.entries)} entries")
 
-print(f"Loading {MASTODON_USER} RSS feed")
-output_feed = load_feed(f"https://{MASTODON_INSTANCE}/{MASTODON_USER}.rss?limit=200")
-print(f"  found {len(output_feed.entries)} entries")
-
-already_tooted = []
-for entry in output_feed.entries:
-    match = re.search('https://mltshp.com/p/[a-zA-Z0-9]+', entry.description)
-    if match:
-        already_tooted.append(match[0])
-
+links = load_links()
 toot = None
+
 for entry in input_feed.entries:
-    if entry.link not in already_tooted:
+    if entry.link not in links:
+        links.append(entry.link)
+        save_links(links)
         (url, alt_text) = get_media(entry)
         (filename, content_type) = download_media(url)
         attachment = upload_media(filename, content_type, alt_text)
-        toot = post_toot(encode_toot(entry), attachment)
         os.remove(filename)
+        if "id" not in attachment:
+            print(attachment)
+            raise Exception("Attachment failed to upload")
+        toot = post_toot(encode_toot(entry), attachment)
+        if toot and "id" in toot:
+            toot_id = toot["id"]
+            print(f"https://{MASTODON_INSTANCE}/{MASTODON_USER}/{toot_id}")
         break
 
-if toot:
-    toot_id = toot["id"]
-    print(f"https://{MASTODON_INSTANCE}/{MASTODON_USER}/{toot_id}")
-else:
+if not toot:
     print("Nothing new to post")
