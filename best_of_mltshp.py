@@ -23,6 +23,8 @@ def load_feed(url):
 def get_media(entry):
     url = re.search(r"https://mltshp.com/r/[a-zA-Z0-9]+", entry.description)
     alt = re.search(r"alt=\"([^\"]*)\"", entry.description)
+    if not url or not alt:
+        return [None, None]
     return [url[0], html.unescape(alt[1])]
 
 def download_media(url):
@@ -127,6 +129,8 @@ for entry in input_feed.entries:
         links.append(entry.link)
         save_links(links)
         (url, alt_text) = get_media(entry)
+        if not url:
+            continue
         (filename, content_type) = download_media(url)
         attachment = upload_media(filename, content_type, alt_text)
         os.remove(filename)
