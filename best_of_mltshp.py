@@ -126,16 +126,26 @@ toot = None
 
 for entry in input_feed.entries:
     if entry.link not in links:
+
+        # Log the current link
         links.append(entry.link)
         save_links(links)
+
+        # Detect media from the RSS feed
         (url, alt_text) = get_media(entry)
         if not url:
             continue
+
+        # Download the media
         (filename, content_type) = download_media(url)
-        attachment = upload_media(filename, content_type, alt_text)
+        attachment = None
+        if content_type != "image/gif":
+            attachment = upload_media(filename, content_type, alt_text)
+            if "id" not in attachment:
+                print(attachment)
         os.remove(filename)
-        if "id" not in attachment:
-            print(attachment)
+
+        # Post the toot
         toot = post_toot(encode_toot(entry), attachment)
         if toot and "id" in toot:
             toot_id = toot["id"]
