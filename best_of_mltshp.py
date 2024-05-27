@@ -59,8 +59,12 @@ def upload_media(filename, content_type, alt_text):
     )
     return rsp.json()
 
-def encode_toot(entry):
-    return f"{entry.link} “{entry.title}”"
+def encode_toot(entry, alt_text):
+    toot = f"{entry.link} “{entry.title}”"
+    if alt_text == "":
+        toot += "\n#alt4me"
+    return toot
+    
 
 def post_toot(toot, attachment):
     data = {
@@ -135,6 +139,8 @@ for entry in input_feed.entries:
         (url, alt_text) = get_media(entry)
         if not url:
             continue
+        if alt_text == "No alt provided":
+            alt_text = ""
 
         # Download the media
         (filename, content_type) = download_media(url)
@@ -146,7 +152,7 @@ for entry in input_feed.entries:
         os.remove(filename)
 
         # Post the toot
-        toot = post_toot(encode_toot(entry), attachment)
+        toot = post_toot(encode_toot(entry, alt_text), attachment)
         if toot and "id" in toot:
             toot_id = toot["id"]
             print(f"https://{MASTODON_INSTANCE}/{MASTODON_USER}/{toot_id}")
