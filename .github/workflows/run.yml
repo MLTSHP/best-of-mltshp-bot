@@ -2,9 +2,9 @@ name: Run the bot
 
 on:
     workflow_dispatch:
-    #push:
-    #schedule:
-    #    - cron: "*/5 * * * *"
+    push:
+    schedule:
+        - cron: "*/5 * * * *"
 
 jobs:
     scheduled:
