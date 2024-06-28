@@ -92,7 +92,6 @@ def post_toot(toot, attachment):
     return rsp.json()
 
 def save_links(links):
-    links.sort()
     # limit the number of links to 200
     if len(links) > 200:
         num_links = len(links)
