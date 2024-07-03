@@ -75,6 +75,8 @@ def post_toot(toot, attachment):
         data["media_ids[]"] = attachment["id"]
     else:
         print("Posting without an attachment")
+    if "category" in entry and entry['category'] == "nsfw":
+        data['sensitive'] = True
 
     rsp = requests.post(
         f"https://{MASTODON_INSTANCE}/api/v1/statuses",
@@ -117,47 +119,48 @@ def load_links():
     print(f"  found {len(links)} entries")
     return links
 
-print("Loading MLTSHP Popular RSS feed")
-input_feed = load_feed("https://mltshp.com/user/mltshp/rss")
-if len(input_feed.entries) == 0:
-    raise Exception("No popular posts found, something went wrong")
-input_feed.entries.reverse() # Start with the oldest entry in the popular feed
-print(f"  found {len(input_feed.entries)} entries")
+if __name__ == "__main__":
+    print("Loading MLTSHP Popular RSS feed")
+    input_feed = load_feed("https://mltshp.com/user/mltshp/rss")
+    if len(input_feed.entries) == 0:
+        raise Exception("No popular posts found, something went wrong")
+    input_feed.entries.reverse() # Start with the oldest entry in the popular feed
+    print(f"  found {len(input_feed.entries)} entries")
 
-links = load_links()
-toot = None
+    links = load_links()
+    toot = None
 
-for entry in input_feed.entries:
-    if entry.link not in links:
+    for entry in input_feed.entries:
+        if entry.link not in links:
 
-        # Log the current link
-        links.append(entry.link)
-        save_links(links)
+            # Log the current link
+            links.append(entry.link)
+            save_links(links)
 
-        # Detect media from the RSS feed
-        (url, alt_text) = get_media(entry)
-        if not url:
-            continue
-        if alt_text == "No alt provided":
-            alt_text = ""
+            # Detect media from the RSS feed
+            (url, alt_text) = get_media(entry)
+            if not url:
+                continue
+            if alt_text == "No alt provided":
+                alt_text = ""
 
-        # Download the media
-        (filename, content_type) = download_media(url)
-        attachment = None
-        if content_type != "image/gif":
-            attachment = upload_media(filename, content_type, alt_text)
-            if "id" not in attachment:
-                print(attachment)
-        os.remove(filename)
+            # Download the media
+            (filename, content_type) = download_media(url)
+            attachment = None
+            if content_type != "image/gif":
+                attachment = upload_media(filename, content_type, alt_text)
+                if "id" not in attachment:
+                    print(attachment)
+            os.remove(filename)
 
-        # Post the toot
-        toot = post_toot(encode_toot(entry, alt_text), attachment)
-        if toot and "id" in toot:
-            toot_id = toot["id"]
-            print(f"https://{MASTODON_INSTANCE}/{MASTODON_USER}/{toot_id}")
-        else:
-            raise Exception("Something went wrong")
-        break
+            # Post the toot
+            toot = post_toot(encode_toot(entry, alt_text), attachment)
+            if toot and "id" in toot:
+                toot_id = toot["id"]
+                print(f"https://{MASTODON_INSTANCE}/{MASTODON_USER}/{toot_id}")
+            else:
+                raise Exception("Something went wrong")
+            break
 
-if not toot:
-    print("Nothing new to post")
+    if not toot:
+        print("Nothing new to post")
