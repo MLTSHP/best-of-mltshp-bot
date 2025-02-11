@@ -21,9 +21,11 @@ def load_feed(url):
     return feedparser.parse(response.text)
 
 def get_media(entry):
-    url = re.search(r"https://mltshp.com/r/[a-zA-Z0-9]+", entry.description)
+    url = re.search(r"https://mltshp(-cdn)?\.com/r/[a-zA-Z0-9]+", entry.description)
     alt = re.search(r"alt=\"([^\"]*)\"", entry.description)
     if not url or not alt:
+        print("could not find url or alt")
+        print(entry.description)
         return [None, None]
     return [url[0], html.unescape(alt[1])]
 
@@ -60,7 +62,9 @@ def upload_media(filename, content_type, alt_text):
     return rsp.json()
 
 def encode_toot(entry, alt_text):
-    toot = f"{entry.link} “{entry.title}”"
+    toot = entry.link
+    if entry.title != "":
+        toot += f" “{entry.title}”"
     if alt_text == "":
         toot += "\n#alt4me"
     return toot
@@ -131,11 +135,14 @@ if __name__ == "__main__":
     toot = None
 
     for entry in input_feed.entries:
+        print(entry.link)
         if entry.link not in links:
 
             # Log the current link
             links.append(entry.link)
             save_links(links)
+
+            print("okay")
 
             # Detect media from the RSS feed
             (url, alt_text) = get_media(entry)
