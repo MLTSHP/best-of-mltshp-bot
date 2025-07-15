@@ -142,8 +142,6 @@ if __name__ == "__main__":
             links.append(entry.link)
             save_links(links)
 
-            print("okay")
-
             # Detect media from the RSS feed
             (url, alt_text) = get_media(entry)
             if not url:
@@ -155,7 +153,11 @@ if __name__ == "__main__":
             (filename, content_type) = download_media(url)
             attachment = None
             if content_type != "image/gif":
-                attachment = upload_media(filename, content_type, alt_text)
+                try:
+                    attachment = upload_media(filename, content_type, alt_text)
+                except requests.exceptions.ReadTimeout:
+                    # If we time out, just keep on truckin'
+                    continue
                 if "id" not in attachment:
                     print(attachment)
             os.remove(filename)
