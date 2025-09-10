@@ -65,8 +65,8 @@ def encode_toot(entry, alt_text):
     toot = entry.link
     if entry.title != "":
         toot += f" “{entry.title}”"
-    if alt_text == "":
-        toot += "\n#alt4me"
+    if alt_text == "" or alt_text == "CDN Media" or alt_text == "image":
+        return False
     return toot
     
 
@@ -163,10 +163,12 @@ if __name__ == "__main__":
             os.remove(filename)
 
             # Post the toot
-            toot = post_toot(encode_toot(entry, alt_text), attachment)
-            if toot and "id" in toot:
-                toot_id = toot["id"]
-                print(f"https://{MASTODON_INSTANCE}/{MASTODON_USER}/{toot_id}")
+            encoded = encode_toot(entry, alt_text)
+            if encoded == False:
+                continue
+            toot = post_toot(encoded, attachment)
+            if "id" in toot:
+                print(f"https://{MASTODON_INSTANCE}/{MASTODON_USER}/{toot['id']}")
             else:
                 raise Exception("Something went wrong")
             break
