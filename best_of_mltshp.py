@@ -168,7 +168,7 @@ if __name__ == "__main__":
                 continue
             toot = post_toot(encoded, attachment)
             if "id" in toot:
-                print(f"https://{MASTODON_INSTANCE}/{MASTODON_USER}/{toot["id"]}")
+                print(f"https://{MASTODON_INSTANCE}/{MASTODON_USER}/{toot['id']}")
             else:
                 raise Exception("Something went wrong")
             break
