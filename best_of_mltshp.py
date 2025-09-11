@@ -10,6 +10,15 @@ import string
 
 load_dotenv()
 
+# use all lowercase
+disallowed_alt = [
+    "no alt provided",
+    "image",
+    "cdn media",
+    "no photo description available.",
+    "no description available.",
+]
+
 MASTODON_INSTANCE = os.environ["MASTODON_INSTANCE"]
 MASTODON_USER = os.environ["MASTODON_USER"]
 MASTODON_TOKEN = os.environ["MASTODON_TOKEN"]
@@ -27,7 +36,18 @@ def get_media(entry):
         print("could not find url or alt")
         print(entry.description)
         return [None, None]
-    return [url[0], html.unescape(alt[1])]
+    filtered_alt = filter_alt(html.unescape(alt[1]))
+    return [url[0], filtered_alt]
+
+def filter_alt(alt):
+    test_alt = alt.lower()
+    if test_alt in disallowed_alt:
+        return None
+    if test_alt.startswith("may be an image of"):
+        return None
+    if test_alt.startswith("may be a black-and-white image of"):
+        return None
+    return alt
 
 def download_media(url):
     print(f"Downloading {url}")
@@ -61,14 +81,11 @@ def upload_media(filename, content_type, alt_text):
     )
     return rsp.json()
 
-def encode_toot(entry, alt_text):
+def encode_toot(entry):
     toot = entry.link
     if entry.title != "":
         toot += f" “{entry.title}”"
-    if alt_text == "" or alt_text == "CDN Media" or alt_text == "image":
-        return False
     return toot
-    
 
 def post_toot(toot, attachment):
     data = {
@@ -144,10 +161,8 @@ if __name__ == "__main__":
 
             # Detect media from the RSS feed
             (url, alt_text) = get_media(entry)
-            if not url:
+            if not url or not alt_text:
                 continue
-            if alt_text == "No alt provided":
-                alt_text = ""
 
             # Download the media
             (filename, content_type) = download_media(url)
@@ -163,7 +178,7 @@ if __name__ == "__main__":
             os.remove(filename)
 
             # Post the toot
-            encoded = encode_toot(entry, alt_text)
+            encoded = encode_toot(entry)
             if encoded == False:
                 continue
             toot = post_toot(encoded, attachment)
