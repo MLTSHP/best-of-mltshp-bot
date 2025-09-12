@@ -5,7 +5,6 @@ import os
 import random
 import re
 import requests
-import ssl
 import string
 
 load_dotenv()
